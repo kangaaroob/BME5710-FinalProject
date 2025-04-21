@@ -2,7 +2,7 @@ import nbformat
 from nbconvert import PythonExporter
 
 # Load the notebook
-with open('trivialnet.ipynb') as f:
+with open('base.ipynb') as f:
     nb = nbformat.read(f, as_version=4)
 
 # Convert to Python script
