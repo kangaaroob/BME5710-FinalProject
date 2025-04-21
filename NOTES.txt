@@ -1,0 +1,6 @@
+1) TIFFDataset currently stores all images and the 8 transforms in memory which could be innefficent.
+In the future, an on the fly system could be used to do one of two things.
+A) Store one copy of the image in memory (technically 2 due to lr and hr) and do the transformations as needed. This would free up about 7/8ths of the memory associated with the images.
+B) Store only the path to the lr and hr images and load them as needed, then do the transformations as needed. This would free up almost all memory associated with the images.
+
+2)
