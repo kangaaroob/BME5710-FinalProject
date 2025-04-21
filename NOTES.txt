@@ -3,4 +3,8 @@ In the future, an on the fly system could be used to do one of two things.
 A) Store one copy of the image in memory (technically 2 due to lr and hr) and do the transformations as needed. This would free up about 7/8ths of the memory associated with the images.
 B) Store only the path to the lr and hr images and load them as needed, then do the transformations as needed. This would free up almost all memory associated with the images.
 
-2)
+2) Add more convoutional layers (conv4 and conv6) immediately after concatenating features from the skip connections to allow for richer fusion of the combined information at each stage
+
+3) Reduce VRAM usage via lowering batch size, using automatic mixed precision, and implementing gradient accumulation.
+
+4) Use spatial refinement network for second stage. This second network could take the upscaled image as input and learn to predict a refined version or predict a residual map (the difference between the upscaled image and the ground truth) to be added back.
