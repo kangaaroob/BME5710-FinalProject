@@ -1,2 +1,5 @@
 codebase.txt
 two_stage_codebase.txt
+.venv/
+.repomixignore
+__pycache__/
