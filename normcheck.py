@@ -75,7 +75,7 @@ dirs_to_check = [
     # high_res_train_dir,
     low_res_train_dir,
     # high_res_val_dir,
-    low_res_val_dir
+    # low_res_val_dir
 ]
 
 # --- Run the Check ---

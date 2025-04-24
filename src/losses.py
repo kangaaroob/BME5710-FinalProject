@@ -8,7 +8,6 @@ class CombinedLoss(nn.Module):
         self.alpha = alpha # Weight for MSE (related to PSNR) loss
         self.beta = beta # Weight for SSIM loss
         self.mse = nn.MSELoss()
-        # Note: data_range=1.0 assumes inputs are normalized to [0, 1]
         self.ssim = StructuralSimilarityIndexMeasure(data_range=1.0).to(device)
         self.device = device # Store device for input tensor placement
 
@@ -24,11 +23,8 @@ class CombinedLoss(nn.Module):
         # Clamp prediction to [0, 1] before SSIM calculation as required by the metric
         y_pred_clamped = torch.clamp(y_pred_dev, 0.0, 1.0)
 
-        # Ensure target is also clamped just in case, though it should already be
-        y_true_clamped = torch.clamp(y_true_dev, 0.0, 1.0)
-
         # Calculate SSIM value
-        ssim_val = self.ssim(y_pred_clamped, y_true_clamped)
+        ssim_val = self.ssim(y_pred_clamped, y_true_dev)
 
         # Clamp SSIM value to [-1, 1] range as per documentation/potential outputs
         ssim_val_clamped = torch.clamp(ssim_val, min=-1.0, max=1.0)

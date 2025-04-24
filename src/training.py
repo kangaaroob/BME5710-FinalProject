@@ -25,10 +25,9 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device, scaler, u
 
         if torch.isnan(loss):
              print(f"NaN loss detected during training. Skipping batch.")
-             # Optionally: investigate inputs/outputs causing NaN
-             # print("x_tr_batch stats:", torch.min(x_tr_batch), torch.max(x_tr_batch), torch.mean(x_tr_batch))
-             # print("y_tr_batch stats:", torch.min(y_tr_batch), torch.max(y_tr_batch), torch.mean(y_tr_batch))
-             # print("y_hat_tr_batch stats:", torch.min(y_hat_tr_batch), torch.max(y_hat_tr_batch), torch.mean(y_hat_tr_batch))
+             print("x_tr_batch stats:", torch.min(x_tr_batch), torch.max(x_tr_batch), torch.mean(x_tr_batch))
+             print("y_tr_batch stats:", torch.min(y_tr_batch), torch.max(y_tr_batch), torch.mean(y_tr_batch))
+             print("y_hat_tr_batch stats:", torch.min(y_hat_tr_batch), torch.max(y_hat_tr_batch), torch.mean(y_hat_tr_batch))
              continue # Skip this batch
 
         # --- Mixed Precision: Scale loss and backward pass ---

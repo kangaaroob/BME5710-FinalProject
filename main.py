@@ -31,10 +31,10 @@ def main():
     # --- Training Hyperparameters ---
     BATCH_SIZE = 8            # Number of samples per batch
     LEARNING_RATE = 1e-4      # Initial learning rate for the optimizer
-    NUM_EPOCHS = 2          # Maximum number of training epochs
-    PATIENCE_EARLY_STOPPING = 15 # Epochs to wait for improvement before stopping
-    SCHEDULER_PATIENCE = 5    # Epochs to wait for improvement before reducing LR
-    SCHEDULER_FACTOR = 0.1    # Factor by which to reduce LR (new_lr = lr * factor)
+    NUM_EPOCHS = 200          # Maximum number of training epochs
+    PATIENCE_EARLY_STOPPING = 25 # Epochs to wait for improvement before stopping
+    SCHEDULER_PATIENCE = 10    # Epochs to wait for improvement before reducing LR
+    SCHEDULER_FACTOR = 0.05    # Factor by which to reduce LR (new_lr = lr * factor)
     LOSS_ALPHA = 0.5          # Weight for MSE component of the combined loss
     LOSS_BETA = 0.5           # Weight for SSIM component of the combined loss
 

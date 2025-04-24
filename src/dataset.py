@@ -17,11 +17,11 @@ class TIFFDataset(Dataset):
         self.low_res_images = []
         self.high_res_images = []
 
-        print(f"Loading {self.dataset_name}...")
         for filename in self.original_filenames:
             high_res_path = os.path.join(self.high_res_dir, filename)
             low_res_path = os.path.join(self.low_res_dir, filename)
 
+            # Load original images
             try:
                 hr_img = Image.open(high_res_path)
                 lr_img = Image.open(low_res_path)
@@ -64,6 +64,7 @@ class TIFFDataset(Dataset):
                 processed_lr.append(lr_h_flip)
                 processed_hr.append(hr_h_flip)
 
+                # Apply flips combined with rotation (unique combinations)
                 # 7) Rotated by 90 degrees and mirrored on the vertical axis
                 processed_lr.append(lr_v_flip.rotate(90))
                 processed_hr.append(hr_v_flip.rotate(90))
@@ -75,98 +76,62 @@ class TIFFDataset(Dataset):
                 processed_lr.append(original_lr)
                 processed_hr.append(original_hr)
 
-            ### NORMALIZE ALL IMAGES AGAIN ###
-            # # Apply the final transform (ToTensor), normalize each image individually, and store
-            # if self.transform:
-            #     for lr, hr in zip(processed_lr, processed_hr):
-            #         # Convert PIL images to tensors
-            #         lr_tensor = self.transform(lr)
-            #         hr_tensor = self.transform(hr)
-
-            #         # Normalize Low-Resolution Tensor
-            #         min_val_lr = torch.min(lr_tensor)
-            #         max_val_lr = torch.max(lr_tensor)
-            #         if max_val_lr > min_val_lr:
-            #             lr_tensor_normalized = (lr_tensor - min_val_lr) / (max_val_lr - min_val_lr)
-            #         else:
-            #             # Handle constant image (set to 0 or handle as appropriate)
-            #             lr_tensor_normalized = torch.zeros_like(lr_tensor)
-            #         self.low_res_images.append(lr_tensor_normalized) # Store normalized tensor
-
-            #         # Normalize High-Resolution Tensor
-            #         min_val_hr = torch.min(hr_tensor)
-            #         max_val_hr = torch.max(hr_tensor)
-            #         if max_val_hr > min_val_hr:
-            #             hr_tensor_normalized = (hr_tensor - min_val_hr) / (max_val_hr - min_val_hr)
-            #         else:
-            #             # Handle constant image
-            #             hr_tensor_normalized = torch.zeros_like(hr_tensor)
-            #         self.high_res_images.append(hr_tensor_normalized) # Store normalized tensor
-            # else:
-            #      # If no transform, store PIL images (normalization not applied)
-            #     self.low_res_images.extend(processed_lr)
-            #     self.high_res_images.extend(processed_hr)
-
             # Apply the final transform (ToTensor) and store
             if self.transform:
                 for lr, hr in zip(processed_lr, processed_hr):
-                    # Clamp tensors to [0, 1] after transformation
                     self.low_res_images.append(torch.clamp(self.transform(lr), min=0.0, max=1.0))
                     self.high_res_images.append(torch.clamp(self.transform(hr), min=0.0, max=1.0))
             else:
                  # If no transform, store PIL images (not recommended for training/eval)
-                 # Note: Clamping is not applied here as they are PIL images
                 self.low_res_images.extend(processed_lr)
                 self.high_res_images.extend(processed_hr)
-        print(f"Finished loading {self.dataset_name}. Total samples: {len(self.low_res_images)}")
 
+    # Get the number of samples in the dataset (original or augmented)
     def __len__(self):
         return len(self.low_res_images)
 
+    # Get the sample at the given index
     def __getitem__(self, idx):
+        # Return pre-processed tensors
         return self.low_res_images[idx], self.high_res_images[idx]
-
+    
     def verify_clamped_values(self):
-        """Verifies the min/max values of the loaded and clamped tensors."""
+        """
+        Verifies the min/max values of the loaded and clamped tensors.
+        """
         print(f"\n--- Verifying Clamped Values for {self.dataset_name} ---")
-        if not self.low_res_images or not self.high_res_images or not isinstance(self.low_res_images[0], torch.Tensor):
-            print("No tensors loaded or transform not applied, cannot verify.")
+        if not self.low_res_images or not self.high_res_images:
+            print("No images loaded to verify.")
             return
 
         min_lr, max_lr = float('inf'), float('-inf')
         min_hr, max_hr = float('inf'), float('-inf')
 
+        # Check low-resolution images
         for tensor in self.low_res_images:
             current_min_lr = torch.min(tensor).item()
             current_max_lr = torch.max(tensor).item()
             if current_min_lr < min_lr: min_lr = current_min_lr
             if current_max_lr > max_lr: max_lr = current_max_lr
 
+        # Check high-resolution images
         for tensor in self.high_res_images:
             current_min_hr = torch.min(tensor).item()
             current_max_hr = torch.max(tensor).item()
             if current_min_hr < min_hr: min_hr = current_min_hr
             if current_max_hr > max_hr: max_hr = current_max_hr
 
-        # Check if values are actually clamped close to 0 and 1
-        lr_clamped_ok = abs(min_lr - 0.0) < 1e-6 and abs(max_lr - 1.0) < 1e-6
-        hr_clamped_ok = abs(min_hr - 0.0) < 1e-6 and abs(max_hr - 1.0) < 1e-6
-
-        print(f"Low-Res Images (Clamped): Min={min_lr:.8f}, Max={max_lr:.8f} -> Clamped OK: {lr_clamped_ok}")
-        print(f"High-Res Images (Clamped): Min={min_hr:.8f}, Max={max_hr:.8f} -> Clamped OK: {hr_clamped_ok}")
+        print(f"Low-Res Images (Clamped): Min={min_lr:.8f}, Max={max_lr:.8f}")
+        print(f"High-Res Images (Clamped): Min={min_hr:.8f}, Max={max_hr:.8f}")
         print("----------------------------------------------")
 
 
-def create_loader(dataset, batch_size, shuffle_data=True, num_workers=0, pin_memory=False):
+def create_loader(dataset, batch_size, shuffle_data=True, torch_seed=0):
     """Creates a DataLoader."""
-    # Note: Reproducibility is primarily handled by set_seed in main.py
-    # The manual_seed here might be redundant if set globally, but harmless.
-    # Consider num_workers > 0 for performance, but check compatibility with multiprocessing needs.
-    # torch.manual_seed(0) # This might interfere with global seed setting, removed for now.
+    if torch_seed != -1:
+        torch.manual_seed(torch_seed)
     return DataLoader(
         dataset,
         batch_size=batch_size,
-        shuffle=shuffle_data,
-        num_workers=num_workers, # Adjust based on system capabilities and multiprocessing plans
-        pin_memory=pin_memory # Set to True if using GPU for potential speedup
+        shuffle=shuffle_data
     )

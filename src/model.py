@@ -57,22 +57,30 @@ class SuperResolutionNet(nn.Module):
         features128 = self.relu(self.conv1b(features128)) # 80 x 128 x 128
 
         # --- Upscaling Path 1 + Skip Connection 1 ---
+        # Calculate interpolated skip features first
         skip1_interpolated = self.bskip1(features128) # 80 x 256 x 256
+        # Main path upscale using PixelShuffle
         up1_conv_out = self.upscale1_conv(features128) # 80*4 x 128 x 128
         up1_out = self.pixel_shuffle1(up1_conv_out)    # 80 x 256 x 256
         features256_main = self.relu(self.conv2(up1_out))
         features256_main = self.relu(self.conv2b(features256_main)) # 80 x 256 x 256
+        # Concatenate main path features and interpolated skip features
         concat1 = torch.cat((features256_main, skip1_interpolated), dim=1) # 160 x 256 x 256
+        # Process combined features
         features256_processed = self.relu(self.conv_after_skip1(concat1))
         features256_processed = self.relu(self.conv_after_skip1b(features256_processed)) # 80 x 256 x 256
 
         # --- Upscaling Path 2 + Skip Connection 2 ---
+        # Calculate interpolated skip features (using output from conv_after_skip1b)
         skip2_interpolated = self.bskip2(features256_processed) # 80 x 512 x 512
+        # Main path upscale using PixelShuffle (Widened Middle)
         up2_conv_out = self.upscale2_conv(features256_processed) # 80*4 x 256 x 256
         up2_out = self.pixel_shuffle2(up2_conv_out)    # 80 x 512 x 512
         features512_main = self.relu(self.conv3(up2_out))
         features512_main = self.relu(self.conv3b(features512_main)) # 80 x 512 x 512
+        # Concatenate main path features and interpolated skip features
         concat2 = torch.cat((features512_main, skip2_interpolated), dim=1) # 160 x 512 x 512
+        # Process combined features
         features512_processed = self.relu(self.conv_after_skip2(concat2))
         features512_processed = self.relu(self.conv_after_skip2b(features512_processed)) # 80 x 512 x 512
 
